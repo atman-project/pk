@@ -1,21 +1,10 @@
+mod commands;
+mod state;
+
 use std::sync::Mutex;
 
+use state::AppState;
 use tauri::Manager;
-
-struct AppState {
-    keys: Vec<String>,
-}
-
-#[tauri::command]
-fn execute_command(state: tauri::State<Mutex<AppState>>, command: &str) -> String {
-    match command {
-        "ks" => {
-            let state = state.lock().unwrap();
-            state.keys.join(", ")
-        }
-        _ => "unknown command".to_string(),
-    }
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -27,7 +16,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![execute_command])
+        .invoke_handler(tauri::generate_handler![commands::execute_command])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
