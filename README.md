@@ -1,7 +1,12 @@
-# Tauri + Vanilla TS
+# pk
 
-This template should help get you started developing with Tauri in vanilla HTML, CSS and Typescript.
+Your keys in your hand
 
-## Recommended IDE Setup
+## Build and Run
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+```bash
+yarn
+yarn tauri dev  # Build and run a desktop app
+yarn tauri ios dev  # Build and run an iOS app on the iOS simulator
+yarn tauri ios dev --host  # Build and run an iOS app on a physical iOS device
+```
