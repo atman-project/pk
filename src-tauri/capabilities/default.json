@@ -8,6 +8,7 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "core:webview:allow-set-webview-zoom"
+    "core:webview:allow-set-webview-zoom",
+    "fs:default"
   ]
 }

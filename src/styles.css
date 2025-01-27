@@ -21,6 +21,7 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column-reverse;
+  white-space: pre-wrap; /* To support newlines */
 }
 .input-line {
   display: flex;
