@@ -3,24 +3,15 @@ import { invoke } from "@tauri-apps/api/core";
 let inputElement: HTMLInputElement | null;
 let historyElement: HTMLElement | null;
 
-// async function greet() {
-//   if (greetMsgEl && greetInputEl) {
-//     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-//     greetMsgEl.textContent = await invoke("greet", {
-//       name: greetInputEl.value,
-//     });
-//   }
-// }
-
 window.addEventListener("DOMContentLoaded", () => {
   inputElement = document.getElementById("input")! as HTMLInputElement;
   historyElement = document.getElementById("history")!;
 
-  inputElement.addEventListener("keydown", (event) => {
+  inputElement.addEventListener("keydown", async (event) => {
     if (event.key === "Enter") {
       const command = inputElement!.value.trim();
       if (command) {
-        const result = executeCommand(command);
+        const result = await executeCommand(command);
         addHistory(command, result);
         inputElement!.value = "";
       }
@@ -47,19 +38,16 @@ function addHistory(command: string, result: string) {
   historyElement.scrollTop = historyElement.scrollHeight;
 }
 
-function executeCommand(command: string): string {
+async function executeCommand(command: string): Promise<string> {
   switch (command) {
     case "help":
-      return "Available commands: help, echo [text], clear";
+      return "Available commands: help, clear, or [any_text]";
     case "clear":
       if (historyElement) {
         historyElement.innerHTML = "";
       }
       return "";
     default:
-      if (command.startsWith("echo ")) {
-        return command.slice(5);
-      }
-      return "Unknown command";
+      return await invoke("execute_command", { command: command });
   }
 }
