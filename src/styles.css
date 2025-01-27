@@ -31,6 +31,8 @@ body {
   flex-grow: 1;
   caret-color: white;
   outline: none;
+  font-family: monospace;
+  font-size: inherit;
 }
 .prompt {
   margin-right: 5px;
