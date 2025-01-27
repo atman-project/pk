@@ -6,7 +6,8 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100vh; /* standard definition (as fallback) */
+  height: 100dvh; /* dynamic vh will make the trick on iOS */
 }
 .cli {
   display: flex;
