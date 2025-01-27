@@ -19,50 +19,5 @@
         <input class="input" id="input" type="text" autofocus />
       </div>
     </div>
-    <script>
-      const historyElement = document.getElementById("history");
-      const inputElement = document.getElementById("input");
-
-      inputElement.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          const command = inputElement.value.trim();
-          if (command) {
-            const result = executeCommand(command);
-            addHistory(command, result);
-            inputElement.value = "";
-          }
-        }
-      });
-
-      function addHistory(command, result) {
-        const commandElement = document.createElement("div");
-        commandElement.className = "command";
-        commandElement.textContent = `> ${command}`;
-
-        const resultElement = document.createElement("div");
-        resultElement.className = "result";
-        resultElement.textContent = result;
-
-        historyElement.prepend(commandElement);
-        historyElement.prepend(resultElement);
-
-        historyElement.scrollTop = historyElement.scrollHeight;
-      }
-
-      function executeCommand(command) {
-        switch (command) {
-          case "help":
-            return "Available commands: help, echo [text], clear";
-          case "clear":
-            historyElement.innerHTML = "";
-            return "";
-          default:
-            if (command.startsWith("echo ")) {
-              return command.slice(5);
-            }
-            return "Unknown command";
-        }
-      }
-    </script>
   </body>
 </html>
