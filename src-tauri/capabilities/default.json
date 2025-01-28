@@ -9,6 +9,7 @@
     "core:default",
     "opener:default",
     "core:webview:allow-set-webview-zoom",
-    "fs:default"
+    "fs:default",
+    "sql:default"
   ]
 }
