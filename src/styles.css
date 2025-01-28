@@ -25,6 +25,7 @@ body {
 }
 .input-line {
   display: flex;
+  align-items: center;
 }
 .input {
   background-color: black;
