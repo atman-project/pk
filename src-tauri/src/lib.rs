@@ -1,4 +1,7 @@
 mod commands;
+mod db;
+mod error;
+mod key;
 mod state;
 
 use std::{fs, sync::Mutex};

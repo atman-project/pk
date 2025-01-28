@@ -48,6 +48,12 @@ async function executeCommand(command: string): Promise<string> {
       }
       return "";
     default:
-      return await invoke("execute_command", { command: command });
+      try {
+        return await invoke("execute_command", { command: command });
+      } catch (error) {
+        const errorStr = `Error: ${String(error)}`;
+        console.error(errorStr);
+        return errorStr;
+      }
   }
 }
