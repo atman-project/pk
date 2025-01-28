@@ -7,42 +7,45 @@ pub async fn execute_command(
     db_instances: tauri::State<'_, DbInstances>,
     command: &str,
 ) -> Result<String, Error> {
-    let mut iter = command.split_whitespace();
-    match iter.next() {
-        Some("l") => {
+    let mut cmd = Command::new(command);
+    match cmd.next()? {
+        "l" => {
             let lock = db_instances.0.read().await;
             let DbPool::Sqlite(db) = lock.get(DB_URL).ok_or(Error::DBNotFound)?;
             Ok(serde_yaml::to_string(
                 &Key::db_select_all(db).await?.iter().collect::<Vec<_>>(),
             )?)
         }
-        Some("k") => {
+        "k" => {
             let lock = db_instances.0.read().await;
             let DbPool::Sqlite(db) = lock.get(DB_URL).ok_or(Error::DBNotFound)?;
-            let item = iter.next().ok_or(Error::InvalidNumberOfCommandArguments)?;
-            let username = iter.next().ok_or(Error::InvalidNumberOfCommandArguments)?;
+            let item = cmd.next()?;
+            let username = cmd.next()?;
             Ok(serde_yaml::to_string(&Key::db_select(db, item, username).await?).unwrap())
         }
-        Some("i") => {
+        "i" => {
             let lock = db_instances.0.read().await;
             let DbPool::Sqlite(db) = lock.get(DB_URL).ok_or(Error::DBNotFound)?;
             let key = Key {
-                item: iter
-                    .next()
-                    .ok_or(Error::InvalidNumberOfCommandArguments)?
-                    .to_string(),
-                username: iter
-                    .next()
-                    .ok_or(Error::InvalidNumberOfCommandArguments)?
-                    .to_string(),
-                key: iter
-                    .next()
-                    .ok_or(Error::InvalidNumberOfCommandArguments)?
-                    .to_string(),
+                item: cmd.next()?.to_string(),
+                username: cmd.next()?.to_string(),
+                key: cmd.next()?.to_string(),
             };
             let result = key.db_insert(db).await?;
             Ok(format!("Inserted: {:?}", result))
         }
-        Some(_) | None => Ok("unknown command".to_string()),
+        _ => Ok("unknown command".to_string()),
+    }
+}
+
+struct Command<'a>(std::str::SplitWhitespace<'a>);
+
+impl<'a> Command<'a> {
+    fn new(data: &'a str) -> Self {
+        Self(data.split_whitespace())
+    }
+    
+    fn next(&mut self) -> Result<&'a str, Error> {
+        self.0.next().ok_or(Error::InvalidNumberOfCommandArguments)
     }
 }
