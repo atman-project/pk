@@ -10,6 +10,14 @@ pub enum Error {
     DB(#[from] sqlx::Error),
     #[error("YAML error: {0}")]
     Yaml(#[from] serde_yaml::Error),
+    #[error("Gossip error: {0}")]
+    Gossip(String),
+    #[error("No output")]
+    NoOutput,
+    #[error("Argument error: {0}")]
+    Argument(String),
+    #[error("Channel: {0}")]
+    Channel(String),
 }
 
 impl Serialize for Error {

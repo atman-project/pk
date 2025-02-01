@@ -39,6 +39,17 @@
       "preload": [
         "sqlite:pk.db"
       ]
+    },
+    "cli": {
+      "description": "pk app",
+      "args": [
+        {
+          "name": "ticket",
+          "short": "t",
+          "takesValue": true,
+          "description": "Ticket to connect to"
+        }
+      ]
     }
   }
 }

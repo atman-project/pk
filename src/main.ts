@@ -17,6 +17,8 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  startBackgroundTask();
 });
 
 function addHistory(command: string, result: string) {
@@ -55,5 +57,19 @@ async function executeCommand(command: string): Promise<string> {
         console.error(errorStr);
         return errorStr;
       }
+  }
+}
+
+async function startBackgroundTask() {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  while (true) {
+    try {
+      console.log("Waiting for a next background output...");
+      const msg: string = await invoke("next_bg_output");
+      console.log("Received a next background output:", msg);
+      addHistory("[Background output]", msg);
+    } catch (error) {
+      addHistory("[Background error]", `Error: ${String(error)}`);
+    }
   }
 }

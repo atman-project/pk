@@ -1,10 +1,19 @@
+use tauri::async_runtime::RwLock;
 use tauri_plugin_sql::{DbInstances, DbPool};
 
-use crate::{error::Error, key::Key, DB_URL};
+use crate::{error::Error, iroh::Iroh, key::Key, state::BackgroundOutputReceiver, DB_URL};
+
+#[tauri::command]
+pub async fn next_bg_output(
+    bg_output_receiver: tauri::State<'_, BackgroundOutputReceiver>,
+) -> Result<String, Error> {
+    bg_output_receiver.recv().await
+}
 
 #[tauri::command]
 pub async fn execute_command(
     db_instances: tauri::State<'_, DbInstances>,
+    iroh: tauri::State<'_, RwLock<Iroh>>,
     command: &str,
 ) -> Result<String, Error> {
     let mut cmd = Command::new(command);
@@ -34,6 +43,15 @@ pub async fn execute_command(
             let result = key.db_insert(db).await?;
             Ok(format!("Inserted: {:?}", result))
         }
+        "b" => {
+            let msg = cmd.next()?.to_owned();
+            let lock = iroh.read().await;
+            lock.gossip_sender
+                .broadcast(msg.clone().into())
+                .await
+                .map_err(|e| Error::Gossip(e.to_string()))?;
+            Ok(format!("Broadcasted: {msg}").to_string())
+        }
         _ => Ok("unknown command".to_string()),
     }
 }
@@ -44,7 +62,7 @@ impl<'a> Command<'a> {
     fn new(data: &'a str) -> Self {
         Self(data.split_whitespace())
     }
-    
+
     fn next(&mut self) -> Result<&'a str, Error> {
         self.0.next().ok_or(Error::InvalidNumberOfCommandArguments)
     }

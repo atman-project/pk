@@ -33,3 +33,14 @@ sqlx = { version = "0.8", features = [
 zeroize = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
 thiserror = "2"
+iroh = { version = "0.31.0", features = ["discovery-local-network"] }
+rand = "0.8"
+iroh-blobs = "0.31.0"
+iroh-gossip = "0.31.0"
+futures-lite = "2.6.0"
+tokio = { version = "1.43.0", features = ["sync"] }
+anyhow = "1.0.95"
+data-encoding = "2.7.0"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-cli = "2"
