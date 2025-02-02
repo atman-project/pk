@@ -14,10 +14,10 @@ pub enum Error {
     Gossip(String),
     #[error("No output")]
     NoOutput,
-    #[error("Argument error: {0}")]
-    Argument(String),
     #[error("Channel: {0}")]
     Channel(String),
+    #[error("Iroh error: {0}")]
+    Iroh(#[from] anyhow::Error),
 }
 
 impl Serialize for Error {

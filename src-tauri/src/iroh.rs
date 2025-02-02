@@ -16,14 +16,14 @@ use serde::{Deserialize, Serialize};
 
 pub(crate) struct Iroh {
     router: Router,
+    gossip: Gossip,
+    gossip_topic_id: TopicId,
     _blobs_local_pool: Arc<LocalPool>,
-    pub(crate) gossip_sender: GossipSender,
+    pub(crate) gossip_sender: Option<GossipSender>,
 }
 
 impl Iroh {
-    pub async fn new(
-        peer_ticket: Option<String>,
-    ) -> anyhow::Result<(Self, String, GossipReceiver)> {
+    pub async fn new() -> anyhow::Result<(Self, String)> {
         let key = SecretKey::generate(rand::rngs::OsRng);
         let id = key.public();
 
@@ -52,20 +52,6 @@ impl Iroh {
             .await?;
 
         let gossip_topic_id = TopicId::from_bytes([0u8; 32]);
-        let gossip_topic = match peer_ticket {
-            Some(ticket) => {
-                let ticket = Ticket::from_str(&ticket)?;
-                gossip
-                    .subscribe_and_join(
-                        gossip_topic_id,
-                        ticket.nodes.iter().map(|p| p.node_id).collect(),
-                    )
-                    .await?
-            }
-            None => gossip.subscribe(gossip_topic_id, vec![])?,
-        };
-        let (gossip_sender, gossip_receiver) = gossip_topic.split();
-
         let ticket = Ticket {
             topic: gossip_topic_id,
             nodes: vec![endpoint.node_addr().await.unwrap()],
@@ -75,11 +61,12 @@ impl Iroh {
         Ok((
             Self {
                 router,
+                gossip,
+                gossip_topic_id,
                 _blobs_local_pool: Arc::new(blobs_local_pool),
-                gossip_sender,
+                gossip_sender: None,
             },
             ticket.to_string(),
-            gossip_receiver,
         ))
     }
 
@@ -87,6 +74,35 @@ impl Iroh {
     pub(crate) async fn shutdown(self) -> anyhow::Result<()> {
         self.router.shutdown().await?;
         Ok(())
+    }
+
+    pub(crate) async fn gossip_subscribe(
+        &mut self,
+        ticket: Option<String>,
+    ) -> anyhow::Result<GossipReceiver> {
+        if self.gossip_sender.is_some() {
+            return Err(anyhow::anyhow!("Already subscribed"));
+        }
+
+        let gossip_topic = match ticket {
+            Some(ticket) => {
+                let ticket = Ticket::from_str(&ticket)?;
+                self.gossip
+                    .subscribe_and_join(
+                        self.gossip_topic_id,
+                        ticket
+                            .nodes
+                            .into_iter()
+                            .map(|node_addr| node_addr.node_id)
+                            .collect(),
+                    )
+                    .await?
+            }
+            None => self.gossip.subscribe(self.gossip_topic_id, vec![])?,
+        };
+        let (sender, receiver) = gossip_topic.split();
+        self.gossip_sender.replace(sender);
+        Ok(receiver)
     }
 }
 
