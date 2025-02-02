@@ -14,6 +14,7 @@
 		383CC28D62D016A94EF6372A /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B4C36B6A4BEDB122B75CBAE7 /* WebKit.framework */; };
 		461D83B2FA5155DC06F7FD9B /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D8D0DFD19E963162F7AFAC /* UIKit.framework */; };
 		51C01C6466EE218DB3EAF976 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B93B173ACC8B38DEB55F6E41 /* Security.framework */; };
+		57F2E36D2D4F53E300D9A461 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 57F2E36C2D4F53E300D9A461 /* SystemConfiguration.framework */; };
 		A301F63D9513DCDFDE28283B /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE1971B7E1E90911F894AAA9 /* CoreGraphics.framework */; };
 		AFA64A412C01F7AD03FEE0B0 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BA80146E89857380FD30ABB /* MetalKit.framework */; };
 		B892F16F541F38CB19383394 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = A5F2DA717FA02EE4341EE4F8 /* assets */; };
@@ -26,6 +27,7 @@
 		2D3ABACDFF9406E2B86DC0E1 /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		2EB04015F31E365A990A6C06 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		37D43A25114CB43874F0434E /* lib.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = lib.rs; sourceTree = "<group>"; };
+		57F2E36C2D4F53E300D9A461 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		6CE39A6B41A30B680960794C /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		96D8D0DFD19E963162F7AFAC /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		9BA80146E89857380FD30ABB /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
@@ -48,6 +50,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				36CD209E0E1E8525C4C8F7AB /* libapp.a in Frameworks */,
+				57F2E36D2D4F53E300D9A461 /* SystemConfiguration.framework in Frameworks */,
 				A301F63D9513DCDFDE28283B /* CoreGraphics.framework in Frameworks */,
 				EE5A8BB7EBECFCAE57617B5B /* Metal.framework in Frameworks */,
 				AFA64A412C01F7AD03FEE0B0 /* MetalKit.framework in Frameworks */,
@@ -115,6 +118,7 @@
 		E2FC9858F3AC32A6E3293CBF /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				57F2E36C2D4F53E300D9A461 /* SystemConfiguration.framework */,
 				BE1971B7E1E90911F894AAA9 /* CoreGraphics.framework */,
 				2D3ABACDFF9406E2B86DC0E1 /* libapp.a */,
 				F33E0357E3ADD1D51820BAA3 /* Metal.framework */,
