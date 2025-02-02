@@ -1,13 +1,9 @@
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
-    sync::Arc,
 };
 
-use iroh::{
-    discovery::local_swarm_discovery::LocalSwarmDiscovery, protocol::Router, NodeAddr, SecretKey,
-};
-use iroh_blobs::{net_protocol::Blobs, util::local_pool::LocalPool};
+use iroh::{protocol::Router, NodeAddr, SecretKey};
 use iroh_gossip::{
     net::{Gossip, GossipReceiver, GossipSender},
     proto::TopicId,
@@ -18,20 +14,17 @@ pub(crate) struct Iroh {
     router: Router,
     gossip: Gossip,
     gossip_topic_id: TopicId,
-    _blobs_local_pool: Arc<LocalPool>,
     pub(crate) gossip_sender: Option<GossipSender>,
 }
 
 impl Iroh {
     pub async fn new() -> anyhow::Result<(Self, String)> {
         let key = SecretKey::generate(rand::rngs::OsRng);
-        let id = key.public();
 
         let builder = iroh::Endpoint::builder()
             .secret_key(key)
             .relay_mode(iroh::RelayMode::Default)
-            .discovery_n0()
-            .discovery(Box::new(LocalSwarmDiscovery::new(id)?));
+            .discovery_n0();
 
         let endpoint = builder.bind().await?;
         println!(
@@ -40,13 +33,9 @@ impl Iroh {
             endpoint.node_addr().await.unwrap()
         );
 
-        let blobs_local_pool = LocalPool::default();
-        let blobs = Blobs::memory().build(blobs_local_pool.handle(), &endpoint);
-
         let gossip = Gossip::builder().spawn(endpoint.clone()).await?;
 
         let router = Router::builder(endpoint.clone())
-            .accept(iroh_blobs::ALPN, blobs.clone())
             .accept(iroh_gossip::ALPN, gossip.clone())
             .spawn()
             .await?;
@@ -63,7 +52,6 @@ impl Iroh {
                 router,
                 gossip,
                 gossip_topic_id,
-                _blobs_local_pool: Arc::new(blobs_local_pool),
                 gossip_sender: None,
             },
             ticket.to_string(),
