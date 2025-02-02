@@ -65,7 +65,11 @@ pub fn run() {
 
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
-                let (iroh, gossip_receiver) = Iroh::new(args.ticket).await.unwrap();
+                let (iroh, ticket, gossip_receiver) = Iroh::new(args.ticket).await.unwrap();
+                bg_output_sender
+                    .send(format!("Iroh gossip ticket: {}", ticket))
+                    .await
+                    .unwrap();
                 handle.manage(RwLock::new(iroh));
                 handle_gossip_events(gossip_receiver, bg_output_sender)
                     .await

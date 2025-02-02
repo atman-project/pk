@@ -21,7 +21,9 @@ pub(crate) struct Iroh {
 }
 
 impl Iroh {
-    pub async fn new(peer_ticket: Option<String>) -> anyhow::Result<(Self, GossipReceiver)> {
+    pub async fn new(
+        peer_ticket: Option<String>,
+    ) -> anyhow::Result<(Self, String, GossipReceiver)> {
         let key = SecretKey::generate(rand::rngs::OsRng);
         let id = key.public();
 
@@ -76,6 +78,7 @@ impl Iroh {
                 _blobs_local_pool: Arc::new(blobs_local_pool),
                 gossip_sender,
             },
+            ticket.to_string(),
             gossip_receiver,
         ))
     }
