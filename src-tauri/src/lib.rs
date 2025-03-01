@@ -1,3 +1,4 @@
+pub mod automerge;
 mod commands;
 mod db;
 mod error;

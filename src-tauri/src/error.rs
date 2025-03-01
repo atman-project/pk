@@ -18,6 +18,20 @@ pub enum Error {
     Channel(String),
     #[error("Iroh error: {0}")]
     Iroh(#[from] anyhow::Error),
+    #[error("Iroh connection error: {0}")]
+    IrohConnection(#[from] iroh::endpoint::ConnectionError),
+    #[error("Iroh write error: {0}")]
+    IrohWriteError(#[from] iroh::endpoint::WriteError),
+    #[error("Iroh read exact error: {0}")]
+    IrohReadExactError(#[from] iroh::endpoint::ReadExactError),
+    #[error("Iroh close stream error: {0}")]
+    IrohClosedStream(#[from] iroh::endpoint::ClosedStream),
+    #[error("Automerge error: {0}")]
+    Automerge(#[from] automerge::AutomergeError),
+    #[error("Automerge read message error")]
+    AutomergeReadMessage(#[from] automerge::sync::ReadMessageError),
+    #[error("Bincode error: {0}")]
+    Bincode(#[from] bincode::Error),
 }
 
 impl Serialize for Error {
