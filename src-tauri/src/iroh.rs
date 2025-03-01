@@ -3,18 +3,24 @@ use std::{
     str::FromStr,
 };
 
+use automerge::Automerge;
 use iroh::{protocol::Router, NodeAddr, SecretKey};
 use iroh_gossip::{
     net::{Gossip, GossipReceiver, GossipSender},
     proto::TopicId,
 };
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc;
+
+use crate::automerge::IrohAutomergeProtocol;
 
 pub(crate) struct Iroh {
     router: Router,
     gossip: Gossip,
     gossip_topic_id: TopicId,
     pub(crate) gossip_sender: Option<GossipSender>,
+    automerge: IrohAutomergeProtocol,
+    automerge_sync_finished: mpsc::Receiver<Automerge>,
 }
 
 impl Iroh {
@@ -35,8 +41,12 @@ impl Iroh {
 
         let gossip = Gossip::builder().spawn(endpoint.clone()).await?;
 
+        let (automerge_sync_sender, automerge_sync_finished) = mpsc::channel(10);
+        let automerge = IrohAutomergeProtocol::new(Automerge::new(), automerge_sync_sender);
+
         let router = Router::builder(endpoint.clone())
             .accept(iroh_gossip::ALPN, gossip.clone())
+            .accept(IrohAutomergeProtocol::ALPN, automerge.clone())
             .spawn()
             .await?;
 
@@ -53,6 +63,8 @@ impl Iroh {
                 gossip,
                 gossip_topic_id,
                 gossip_sender: None,
+                automerge,
+                automerge_sync_finished,
             },
             ticket.to_string(),
         ))
@@ -92,6 +104,8 @@ impl Iroh {
         self.gossip_sender.replace(sender);
         Ok(receiver)
     }
+
+    pub(crate) async fn create_doc(&mut self) -> anyhow::Result<()> {}
 }
 
 #[derive(Debug, Serialize, Deserialize)]

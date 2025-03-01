@@ -12,7 +12,7 @@ use crate::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct IrohAutomergeProtocol {
-    inner: Arc<Mutex<Automerge>>,
+    doc: Arc<Mutex<Automerge>>,
     sync_finished: mpsc::Sender<Automerge>,
 }
 
@@ -23,20 +23,22 @@ enum Protocol {
 }
 
 impl IrohAutomergeProtocol {
-    pub fn new(automerge: Automerge, sync_finished: mpsc::Sender<Automerge>) -> Self {
+    pub const ALPN: &'static [u8] = b"iroh/automerge/1";
+
+    pub fn new(doc: Automerge, sync_finished: mpsc::Sender<Automerge>) -> Self {
         Self {
-            inner: Arc::new(Mutex::new(automerge)),
+            doc: Arc::new(Mutex::new(doc)),
             sync_finished,
         }
     }
 
     pub async fn fork_doc(&self) -> Automerge {
-        let automerge = self.inner.lock().await;
+        let automerge = self.doc.lock().await;
         automerge.fork()
     }
 
     pub async fn merge_doc(&self, doc: &mut Automerge) -> Result<(), Error> {
-        let mut automerge = self.inner.lock().await;
+        let mut automerge = self.doc.lock().await;
         automerge.merge(doc)?;
         Ok(())
     }
