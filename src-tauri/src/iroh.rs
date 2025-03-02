@@ -1,10 +1,15 @@
 use std::{
+    collections::{hash_map::Entry, HashMap},
     fmt::{Display, Formatter},
     str::FromStr,
 };
 
 use automerge::{transaction::Transactable, Automerge};
-use iroh::{protocol::Router, NodeAddr, NodeId, SecretKey};
+use iroh::{
+    endpoint::{Connection, RecvStream, SendStream},
+    protocol::Router,
+    NodeAddr, NodeId, SecretKey,
+};
 use iroh_gossip::{
     net::{Gossip, GossipReceiver, GossipSender},
     proto::TopicId,
@@ -20,6 +25,7 @@ pub(crate) struct Iroh {
     gossip_topic_id: TopicId,
     pub(crate) gossip_sender: Option<GossipSender>,
     automerge: IrohAutomergeProtocol,
+    connections: HashMap<NodeId, Connection>,
 }
 
 impl Iroh {
@@ -63,6 +69,7 @@ impl Iroh {
                 gossip_topic_id,
                 gossip_sender: None,
                 automerge,
+                connections: HashMap::new(),
             },
             ticket.to_string(),
             automerge_sync_finished,
@@ -113,15 +120,26 @@ impl Iroh {
         Ok(())
     }
 
-    pub(crate) async fn doc_sync(&self, node_id: NodeId) -> anyhow::Result<()> {
-        let node_addr = NodeAddr::new(node_id);
-        let conn = self
-            .router
-            .endpoint()
-            .connect(node_addr, IrohAutomergeProtocol::ALPN)
-            .await?;
-        self.automerge.initiate_sync(conn).await?;
+    pub(crate) async fn doc_sync(&mut self, node_id: NodeId) -> anyhow::Result<()> {
+        let (sender, receiver) = self.connect(node_id).await?;
+        self.automerge.initiate_sync(sender, receiver).await?;
         Ok(())
+    }
+
+    async fn connect(&mut self, node_id: NodeId) -> anyhow::Result<(SendStream, RecvStream)> {
+        let conn = if !self.connections.contains_key(&node_id) {
+            let node_addr = NodeAddr::new(node_id);
+            let conn = self
+                .router
+                .endpoint()
+                .connect(node_addr, IrohAutomergeProtocol::ALPN)
+                .await?;
+            self.connections.entry(node_id).or_insert(conn)
+        } else {
+            self.connections.get(&node_id).unwrap()
+        };
+        let (sender, receiver) = conn.open_bi().await?;
+        Ok((sender, receiver))
     }
 }
 

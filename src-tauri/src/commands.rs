@@ -83,7 +83,7 @@ pub async fn execute_command(
         }
         "ds" => {
             let node_id = NodeId::from_str(cmd.next()?).unwrap();
-            let lock = iroh.read().await;
+            let mut lock = iroh.write().await;
             lock.doc_sync(node_id).await?;
             Ok("Document synced".to_string())
         }

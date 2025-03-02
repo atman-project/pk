@@ -61,9 +61,11 @@ impl IrohAutomergeProtocol {
         Ok(bincode::deserialize(&buffer)?)
     }
 
-    pub async fn initiate_sync(&self, conn: Connection) -> Result<(), Error> {
-        let (mut conn_sender, mut conn_receiver) = conn.open_bi().await?;
-
+    pub async fn initiate_sync(
+        &self,
+        mut conn_sender: SendStream,
+        mut conn_receiver: RecvStream,
+    ) -> Result<(), Error> {
         let mut doc = self.fork_doc().await;
         let mut sync_state = automerge::sync::State::new();
 
