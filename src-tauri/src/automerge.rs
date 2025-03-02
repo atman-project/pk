@@ -77,11 +77,16 @@ impl IrohAutomergeProtocol {
 
             if !is_local_done {
                 is_local_done = matches!(msg, Protocol::Done);
+                println!("Initiator: sending {:?}", msg);
                 Self::send_msg(msg, &mut conn_sender).await?;
+                println!("Initiator: sent");
             }
 
             if !is_remote_done {
-                match Self::recv_msg(&mut conn_receiver).await? {
+                println!("Initiator: receiving...");
+                let msg = Self::recv_msg(&mut conn_receiver).await?;
+                println!("Initiator: received: {:?}", msg);
+                match msg {
                     Protocol::SyncMessage(sync_msg) => {
                         let sync_msg = automerge::sync::Message::decode(&sync_msg)?;
                         doc.receive_sync_message(&mut sync_state, sync_msg)?;
@@ -108,7 +113,10 @@ impl IrohAutomergeProtocol {
         let mut is_remote_done = false;
         while !is_local_done || !is_remote_done {
             if !is_remote_done {
-                match Self::recv_msg(&mut conn_receiver).await? {
+                println!("Responder: receiving...");
+                let msg = Self::recv_msg(&mut conn_receiver).await?;
+                println!("Responder: received: {:?}", msg);
+                match msg {
                     Protocol::SyncMessage(sync_msg) => {
                         let sync_msg = automerge::sync::Message::decode(&sync_msg)?;
                         doc.receive_sync_message(&mut sync_state, sync_msg)?;
@@ -126,7 +134,9 @@ impl IrohAutomergeProtocol {
             };
             if !is_local_done {
                 is_local_done = matches!(msg, Protocol::Done);
+                println!("Responder: sending {:?}", msg);
                 Self::send_msg(msg, &mut conn_sender).await?;
+                println!("Responder: sent");
             }
         }
 
