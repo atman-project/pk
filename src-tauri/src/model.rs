@@ -7,3 +7,9 @@ pub(crate) struct Key {
     pub(crate) username: String,
     pub(crate) key: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct DocEntry {
+    pub(crate) key: String,
+    pub(crate) value: String,
+}

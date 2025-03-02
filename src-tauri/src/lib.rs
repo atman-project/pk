@@ -10,6 +10,7 @@ use std::fs;
 
 use ::automerge::{ReadDoc, ROOT};
 use iroh::Iroh;
+use model::DocEntry;
 use state::BackgroundOutputReceiver;
 use tauri::{async_runtime::RwLock, path::BaseDirectory, Manager};
 use tauri_plugin_fs::FsExt;
@@ -68,13 +69,20 @@ pub fn run() {
                 handle.manage(bg_output_sender.clone());
 
                 while let Some(doc) = automerge_sync_finished.recv().await {
-                    for key in doc.keys(ROOT) {
-                        let (value, _) = doc.get(ROOT, &key).unwrap().unwrap();
-                        bg_output_sender
-                            .send(format!("{} => {}", key, value))
-                            .await
-                            .unwrap();
-                    }
+                    let doc_entries = doc
+                        .keys(ROOT)
+                        .map(|key| {
+                            let (value, _) = doc.get(ROOT, &key).unwrap().unwrap();
+                            DocEntry {
+                                key: key.to_string(),
+                                value: value.to_string(),
+                            }
+                        })
+                        .collect::<Vec<_>>();
+                    bg_output_sender
+                        .send(serde_json::to_string_pretty(&doc_entries).unwrap())
+                        .await
+                        .unwrap();
                 }
             });
 
