@@ -3,11 +3,12 @@ mod commands;
 mod db;
 mod error;
 mod iroh;
-mod key;
+mod model;
 mod state;
 
 use std::fs;
 
+use ::automerge::{ReadDoc, ROOT};
 use iroh::Iroh;
 use state::BackgroundOutputReceiver;
 use tauri::{async_runtime::RwLock, path::BaseDirectory, Manager};
@@ -58,13 +59,23 @@ pub fn run() {
 
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
-                let (iroh, ticket) = Iroh::new().await.unwrap();
+                let (iroh, ticket, mut automerge_sync_finished) = Iroh::new().await.unwrap();
                 bg_output_sender
                     .send(format!("Iroh gossip ticket: {}", ticket))
                     .await
                     .unwrap();
                 handle.manage(RwLock::new(iroh));
-                handle.manage(bg_output_sender);
+                handle.manage(bg_output_sender.clone());
+
+                while let Some(doc) = automerge_sync_finished.recv().await {
+                    for key in doc.keys(ROOT) {
+                        let (value, _) = doc.get(ROOT, &key).unwrap().unwrap();
+                        bg_output_sender
+                            .send(format!("{} => {}", key, value))
+                            .await
+                            .unwrap();
+                    }
+                }
             });
 
             Ok(())

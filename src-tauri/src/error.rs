@@ -21,9 +21,9 @@ pub enum Error {
     #[error("Iroh connection error: {0}")]
     IrohConnection(#[from] iroh::endpoint::ConnectionError),
     #[error("Iroh write error: {0}")]
-    IrohWriteError(#[from] iroh::endpoint::WriteError),
+    IrohWrite(#[from] iroh::endpoint::WriteError),
     #[error("Iroh read exact error: {0}")]
-    IrohReadExactError(#[from] iroh::endpoint::ReadExactError),
+    IrohReadExact(#[from] iroh::endpoint::ReadExactError),
     #[error("Iroh close stream error: {0}")]
     IrohClosedStream(#[from] iroh::endpoint::ClosedStream),
     #[error("Automerge error: {0}")]

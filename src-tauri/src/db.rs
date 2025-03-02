@@ -2,7 +2,7 @@ use std::time::SystemTime;
 
 use sqlx::{sqlite::SqliteRow, Executor, Pool, Row, Sqlite};
 
-use crate::key::Key;
+use crate::model::Key;
 
 impl Key {
     pub(crate) async fn db_select_all(db: &Pool<Sqlite>) -> Result<Vec<Self>, sqlx::Error> {

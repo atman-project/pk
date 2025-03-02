@@ -61,7 +61,7 @@ impl IrohAutomergeProtocol {
         Ok(bincode::deserialize(&buffer)?)
     }
 
-    pub async fn initiate_sync(self: Arc<Self>, conn: Connection) -> Result<(), Error> {
+    pub async fn initiate_sync(&self, conn: Connection) -> Result<(), Error> {
         let (mut conn_sender, mut conn_receiver) = conn.open_bi().await?;
 
         let mut doc = self.fork_doc().await;

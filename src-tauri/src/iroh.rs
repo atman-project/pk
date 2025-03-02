@@ -3,8 +3,8 @@ use std::{
     str::FromStr,
 };
 
-use automerge::Automerge;
-use iroh::{protocol::Router, NodeAddr, SecretKey};
+use automerge::{transaction::Transactable, Automerge};
+use iroh::{protocol::Router, NodeAddr, NodeId, SecretKey};
 use iroh_gossip::{
     net::{Gossip, GossipReceiver, GossipSender},
     proto::TopicId,
@@ -20,11 +20,10 @@ pub(crate) struct Iroh {
     gossip_topic_id: TopicId,
     pub(crate) gossip_sender: Option<GossipSender>,
     automerge: IrohAutomergeProtocol,
-    automerge_sync_finished: mpsc::Receiver<Automerge>,
 }
 
 impl Iroh {
-    pub async fn new() -> anyhow::Result<(Self, String)> {
+    pub async fn new() -> anyhow::Result<(Self, String, mpsc::Receiver<Automerge>)> {
         let key = SecretKey::generate(rand::rngs::OsRng);
 
         let builder = iroh::Endpoint::builder()
@@ -64,9 +63,9 @@ impl Iroh {
                 gossip_topic_id,
                 gossip_sender: None,
                 automerge,
-                automerge_sync_finished,
             },
             ticket.to_string(),
+            automerge_sync_finished,
         ))
     }
 
@@ -105,7 +104,27 @@ impl Iroh {
         Ok(receiver)
     }
 
-    pub(crate) async fn create_doc(&mut self) -> anyhow::Result<()> {}
+    pub(crate) async fn update_doc(&mut self) -> anyhow::Result<()> {
+        let mut doc = self.automerge.fork_doc().await;
+        let mut tx = doc.transaction();
+        for i in 0..5 {
+            tx.put(automerge::ROOT, format!("k-{}", i), format!("v-{}", i))?;
+        }
+        tx.commit();
+        self.automerge.merge_doc(&mut doc).await?;
+        Ok(())
+    }
+
+    pub(crate) async fn doc_sync(&self, node_id: NodeId) -> anyhow::Result<()> {
+        let node_addr = NodeAddr::new(node_id);
+        let conn = self
+            .router
+            .endpoint()
+            .connect(node_addr, IrohAutomergeProtocol::ALPN)
+            .await?;
+        self.automerge.initiate_sync(conn).await?;
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

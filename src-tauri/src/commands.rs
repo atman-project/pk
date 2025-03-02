@@ -1,10 +1,13 @@
+use std::str::FromStr;
+
 use futures_lite::StreamExt;
+use iroh::NodeId;
 use iroh_gossip::net::GossipReceiver;
 use tauri::async_runtime::RwLock;
 use tauri_plugin_sql::{DbInstances, DbPool};
 use tokio::sync::mpsc;
 
-use crate::{error::Error, iroh::Iroh, key::Key, state::BackgroundOutputReceiver, DB_URL};
+use crate::{error::Error, iroh::Iroh, model::Key, state::BackgroundOutputReceiver, DB_URL};
 
 #[tauri::command]
 pub async fn next_bg_output(
@@ -71,6 +74,17 @@ pub async fn execute_command(
             } else {
                 Err(Error::Gossip("Not subscribed yet".to_string()))
             }
+        }
+        "dp" => {
+            let mut lock = iroh.write().await;
+            lock.update_doc().await?;
+            Ok("Document updated".to_string())
+        }
+        "ds" => {
+            let node_id = NodeId::from_str(cmd.next()?).unwrap();
+            let lock = iroh.read().await;
+            lock.doc_sync(node_id).await?;
+            Ok("Document synced".to_string())
         }
         _ => Ok("unknown command".to_string()),
     }
