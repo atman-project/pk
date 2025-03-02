@@ -104,12 +104,10 @@ impl Iroh {
         Ok(receiver)
     }
 
-    pub(crate) async fn update_doc(&mut self) -> anyhow::Result<()> {
+    pub(crate) async fn update_doc(&mut self, key: String, value: String) -> anyhow::Result<()> {
         let mut doc = self.automerge.fork_doc().await;
         let mut tx = doc.transaction();
-        for i in 0..5 {
-            tx.put(automerge::ROOT, format!("k-{}", i), format!("v-{}", i))?;
-        }
+        tx.put(automerge::ROOT, key, value)?;
         tx.commit();
         self.automerge.merge_doc(&mut doc).await?;
         Ok(())

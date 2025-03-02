@@ -77,7 +77,8 @@ pub async fn execute_command(
         }
         "dp" => {
             let mut lock = iroh.write().await;
-            lock.update_doc().await?;
+            lock.update_doc(cmd.next()?.to_string(), cmd.next()?.to_string())
+                .await?;
             Ok("Document updated".to_string())
         }
         "ds" => {
