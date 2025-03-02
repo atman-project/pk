@@ -68,7 +68,8 @@ impl IrohAutomergeProtocol {
         let mut sync_state = automerge::sync::State::new();
 
         let mut is_local_done = false;
-        loop {
+        let mut is_remote_done = false;
+        while !is_local_done || !is_remote_done {
             let msg = match doc.generate_sync_message(&mut sync_state) {
                 Some(msg) => Protocol::SyncMessage(msg.encode()),
                 None => Protocol::Done,
@@ -79,17 +80,17 @@ impl IrohAutomergeProtocol {
                 Self::send_msg(msg, &mut conn_sender).await?;
             }
 
-            let msg = Self::recv_msg(&mut conn_receiver).await?;
-            let is_remote_done = matches!(msg, Protocol::Done);
-
-            if let Protocol::SyncMessage(sync_msg) = msg {
-                let sync_msg = automerge::sync::Message::decode(&sync_msg)?;
-                doc.receive_sync_message(&mut sync_state, sync_msg)?;
-                self.merge_doc(&mut doc).await?;
-            }
-
-            if is_remote_done && is_local_done {
-                break;
+            if !is_remote_done {
+                match Self::recv_msg(&mut conn_receiver).await? {
+                    Protocol::SyncMessage(sync_msg) => {
+                        let sync_msg = automerge::sync::Message::decode(&sync_msg)?;
+                        doc.receive_sync_message(&mut sync_state, sync_msg)?;
+                        self.merge_doc(&mut doc).await?;
+                    }
+                    Protocol::Done => {
+                        is_remote_done = true;
+                    }
+                }
             }
         }
 
@@ -104,28 +105,28 @@ impl IrohAutomergeProtocol {
         let mut sync_state = automerge::sync::State::new();
 
         let mut is_local_done = false;
-        loop {
-            let msg = Self::recv_msg(&mut conn_receiver).await?;
-            let is_remote_done = matches!(msg, Protocol::Done);
-
-            if let Protocol::SyncMessage(sync_msg) = msg {
-                let sync_msg = automerge::sync::Message::decode(&sync_msg)?;
-                doc.receive_sync_message(&mut sync_state, sync_msg)?;
-                self.merge_doc(&mut doc).await?;
+        let mut is_remote_done = false;
+        while !is_local_done || !is_remote_done {
+            if !is_remote_done {
+                match Self::recv_msg(&mut conn_receiver).await? {
+                    Protocol::SyncMessage(sync_msg) => {
+                        let sync_msg = automerge::sync::Message::decode(&sync_msg)?;
+                        doc.receive_sync_message(&mut sync_state, sync_msg)?;
+                        self.merge_doc(&mut doc).await?;
+                    }
+                    Protocol::Done => {
+                        is_remote_done = true;
+                    }
+                }
             }
 
             let msg = match doc.generate_sync_message(&mut sync_state) {
                 Some(msg) => Protocol::SyncMessage(msg.encode()),
                 None => Protocol::Done,
             };
-
             if !is_local_done {
                 is_local_done = matches!(msg, Protocol::Done);
                 Self::send_msg(msg, &mut conn_sender).await?;
-            }
-
-            if is_remote_done && is_local_done {
-                break;
             }
         }
 
