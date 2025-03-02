@@ -94,7 +94,7 @@ impl IrohAutomergeProtocol {
             }
         }
 
-        conn_sender.finish()?;
+        // conn_sender.finish()?;
         Ok(())
     }
 
@@ -130,7 +130,7 @@ impl IrohAutomergeProtocol {
             }
         }
 
-        conn_sender.finish()?;
+        // conn_sender.finish()?;
         Ok(())
     }
 }
