@@ -1,3 +1,4 @@
+mod actors;
 pub mod automerge;
 mod commands;
 mod db;
