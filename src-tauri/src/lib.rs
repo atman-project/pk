@@ -1,13 +1,13 @@
+mod actors;
 mod commands;
 mod db;
 mod error;
-mod iroh;
 mod key;
 mod state;
 
 use std::fs;
 
-use iroh::Iroh;
+use actors::iroh::IrohActor;
 use state::BackgroundOutputReceiver;
 use tauri::{async_runtime::RwLock, path::BaseDirectory, Manager};
 use tauri_plugin_fs::FsExt;
@@ -55,14 +55,15 @@ pub fn run() {
             let (bg_output_sender, bg_output_receiver) = mpsc::channel(1024);
             app.manage(BackgroundOutputReceiver::new(bg_output_receiver));
 
+            // Initiate Actman
             let handle = app.handle().clone();
+            let bg_output_sender = bg_output_sender.clone();
             tauri::async_runtime::spawn(async move {
-                let (iroh, ticket) = Iroh::new().await.unwrap();
-                bg_output_sender
-                    .send(format!("Iroh gossip ticket: {}", ticket))
-                    .await
-                    .unwrap();
-                handle.manage(RwLock::new(iroh));
+                let mut actman_runner = actman::Runner::new();
+                let iroh_actor_handle = actman_runner.run(IrohActor::new().await.unwrap());
+
+                handle.manage(RwLock::new(actman_runner));
+                handle.manage(iroh_actor_handle);
                 handle.manage(bg_output_sender);
             });
 

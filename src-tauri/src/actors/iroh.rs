@@ -3,15 +3,19 @@ use std::{
     str::FromStr,
 };
 
+use actman::{Actor, Control, State};
 use iroh::{protocol::Router, NodeAddr, SecretKey};
 use serde::{Deserialize, Serialize};
 
-pub(crate) struct Iroh {
+pub struct IrohActor {
     router: Router,
+    ticket: Ticket,
 }
 
-impl Iroh {
-    pub async fn new() -> anyhow::Result<(Self, String)> {
+pub enum IrohActorMessage {}
+
+impl IrohActor {
+    pub async fn new() -> anyhow::Result<Self> {
         let key = SecretKey::generate(rand::rngs::OsRng);
 
         let builder = iroh::Endpoint::builder()
@@ -33,13 +37,33 @@ impl Iroh {
         };
         println!("Ticket: {}", ticket);
 
-        Ok((Self { router }, ticket.to_string()))
+        Ok(Self { router, ticket })
     }
+}
 
-    #[allow(dead_code)]
-    pub(crate) async fn shutdown(self) -> anyhow::Result<()> {
-        self.router.shutdown().await?;
-        Ok(())
+#[async_trait::async_trait]
+impl Actor for IrohActor {
+    type Message = IrohActorMessage;
+
+    async fn run(mut self, mut state: State<Self>) {
+        loop {
+            tokio::select! {
+                Some(ctrl) = state.control_receiver.recv() => {
+                    match ctrl {
+                        Control::Shutdown => {
+                            if let Err(e) = self.router.shutdown().await {
+                                tracing::error!("Failed to shutdown Iroh router: {e:?}");
+                            }
+                            break;
+                        },
+                    }
+                }
+                Some(message) = state.message_receiver.recv() => {
+                    todo!()
+                }
+                else => break,
+            }
+        }
     }
 }
 

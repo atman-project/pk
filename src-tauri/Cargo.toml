@@ -39,3 +39,8 @@ futures-lite = "2.6.0"
 tokio = { version = "1.43.0", features = ["sync"] }
 anyhow = "1.0.95"
 data-encoding = "2.7.0"
+syncman-network = { git = "https://github.com/atman-project/syncman", branch = "main" }
+actman = "0.1"
+async-trait = "0.1"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"

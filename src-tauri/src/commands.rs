@@ -2,7 +2,9 @@ use tauri::async_runtime::RwLock;
 use tauri_plugin_sql::{DbInstances, DbPool};
 use tokio::sync::mpsc;
 
-use crate::{error::Error, iroh::Iroh, key::Key, state::BackgroundOutputReceiver, DB_URL};
+use crate::{
+    actors::iroh::IrohActor, error::Error, key::Key, state::BackgroundOutputReceiver, DB_URL,
+};
 
 #[tauri::command]
 pub async fn next_bg_output(
@@ -14,7 +16,7 @@ pub async fn next_bg_output(
 #[tauri::command]
 pub async fn execute_command(
     db_instances: tauri::State<'_, DbInstances>,
-    _iroh: tauri::State<'_, RwLock<Iroh>>,
+    _iroh_actor_handle: tauri::State<'_, actman::Handle<IrohActor>>,
     _bg_output_sender: tauri::State<'_, mpsc::Sender<String>>,
     command: &str,
 ) -> Result<String, Error> {
