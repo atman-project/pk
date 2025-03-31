@@ -10,12 +10,8 @@ pub enum Error {
     DB(#[from] sqlx::Error),
     #[error("YAML error: {0}")]
     Yaml(#[from] serde_yaml::Error),
-    #[error("Gossip error: {0}")]
-    Gossip(String),
     #[error("No output")]
     NoOutput,
-    #[error("Channel: {0}")]
-    Channel(String),
     #[error("Iroh error: {0}")]
     Iroh(#[from] anyhow::Error),
 }

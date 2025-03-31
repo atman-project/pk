@@ -4,17 +4,10 @@ use std::{
 };
 
 use iroh::{protocol::Router, NodeAddr, SecretKey};
-use iroh_gossip::{
-    net::{Gossip, GossipReceiver, GossipSender},
-    proto::TopicId,
-};
 use serde::{Deserialize, Serialize};
 
 pub(crate) struct Iroh {
     router: Router,
-    gossip: Gossip,
-    gossip_topic_id: TopicId,
-    pub(crate) gossip_sender: Option<GossipSender>,
 }
 
 impl Iroh {
@@ -33,29 +26,14 @@ impl Iroh {
             endpoint.node_addr().await.unwrap()
         );
 
-        let gossip = Gossip::builder().spawn(endpoint.clone()).await?;
+        let router = Router::builder(endpoint.clone()).spawn().await?;
 
-        let router = Router::builder(endpoint.clone())
-            .accept(iroh_gossip::ALPN, gossip.clone())
-            .spawn()
-            .await?;
-
-        let gossip_topic_id = TopicId::from_bytes([0u8; 32]);
         let ticket = Ticket {
-            topic: gossip_topic_id,
             nodes: vec![endpoint.node_addr().await.unwrap()],
         };
         println!("Ticket: {}", ticket);
 
-        Ok((
-            Self {
-                router,
-                gossip,
-                gossip_topic_id,
-                gossip_sender: None,
-            },
-            ticket.to_string(),
-        ))
+        Ok((Self { router }, ticket.to_string()))
     }
 
     #[allow(dead_code)]
@@ -63,40 +41,10 @@ impl Iroh {
         self.router.shutdown().await?;
         Ok(())
     }
-
-    pub(crate) async fn gossip_subscribe(
-        &mut self,
-        ticket: Option<String>,
-    ) -> anyhow::Result<GossipReceiver> {
-        if self.gossip_sender.is_some() {
-            return Err(anyhow::anyhow!("Already subscribed"));
-        }
-
-        let gossip_topic = match ticket {
-            Some(ticket) => {
-                let ticket = Ticket::from_str(&ticket)?;
-                self.gossip
-                    .subscribe_and_join(
-                        self.gossip_topic_id,
-                        ticket
-                            .nodes
-                            .into_iter()
-                            .map(|node_addr| node_addr.node_id)
-                            .collect(),
-                    )
-                    .await?
-            }
-            None => self.gossip.subscribe(self.gossip_topic_id, vec![])?,
-        };
-        let (sender, receiver) = gossip_topic.split();
-        self.gossip_sender.replace(sender);
-        Ok(receiver)
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Ticket {
-    topic: TopicId,
     nodes: Vec<NodeAddr>,
 }
 
